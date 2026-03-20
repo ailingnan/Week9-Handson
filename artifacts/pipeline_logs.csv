@@ -1,0 +1,11 @@
+timestamp,run_id,stage,status,rows_in,rows_out,latency_ms,error_message
+2026-02-23T05:06:39.983876,search-1771823197,llm_generate,success,,,646,
+2026-02-23T05:06:39.984003,search-1771823197,search,success,,8,2034,
+2026-02-23T05:07:55.020279,search-1771823270,llm_generate,success,,,616,
+2026-02-23T05:07:55.021982,search-1771823270,search,success,,8,3977,
+2026-02-23T05:10:17.556198,search-1771823413,llm_generate,success,,,472,
+2026-02-23T05:10:17.556684,search-1771823413,search,success,,8,3197,
+2026-02-23T05:11:50.086214,search-1771823508,llm_generate,success,,,352,
+2026-02-23T05:11:50.087648,search-1771823508,search,success,,8,1260,
+2026-02-23T05:12:28.491476,search-1771823546,llm_generate,success,,,364,
+2026-02-23T05:12:28.492409,search-1771823546,search,success,,8,1197,

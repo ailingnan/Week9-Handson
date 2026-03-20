@@ -1,0 +1,18 @@
+llm_model: "llama-3.1-8b-instant"
+
+snowflake:
+  doc_chunks_table: "DOC_CHUNKS_FEATURED"
+  feature_store_table: "FEATURE_STORE"
+  ingest_log_table: "INGEST_LOG"
+  eval_metrics_table: "EVAL_METRICS"
+
+retrieval:
+  default_top_k: 8
+  whatif_default_top_k: 5
+  eval_history_limit: 200
+  feature_history_limit: 50
+
+ingestion:
+  inbox_dir: "ingest_inbox"
+  done_dir: "ingest_done"
+  poll_interval_sec: 60
