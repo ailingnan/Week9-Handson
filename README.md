@@ -8,7 +8,7 @@ We added a new **📅 Weekly Schedule** tab to the Streamlit application. This f
 
 - **Syllabus PDF parsing** — students upload their course syllabi and the system uses the Claude API to automatically extract all class meeting times, room locations, assignment due dates, exam dates, and semester bounds. No manual entry required.
 - **RooGroups campus event integration** — the system connects to UMKC's RooGroups platform using the student's credentials to pull live campus activities for the week. A demo mode with realistic mock events is available for offline use.
-- **Personal event input (English + Chinese)** — students can type any personal event in natural language (e.g. "4月5号有个会议" or "April 10 team meeting at 2pm") and the Claude API parses it into a structured schedule entry automatically.
+- **Personal event input (English)** — students can type any personal event in natural language (e.g. "dentist tomorrow 3PM" or "April 10 team meeting at 2pm") and the Claude API parses it into a structured schedule entry automatically.
 - **Free-gap detection** — the system automatically identifies free time slots between classes (minimum 30 minutes) and highlights which campus events fall within those gaps, so students can actually attend them.
 - **Google Maps navigation** — each event card with a building name generates a directions link using the student's GPS coordinates as the origin. Clicking opens turn-by-turn navigation in Google Maps at no API cost.
 - **Week navigation** — students can browse forward and backward by week using Prev / Today / Next buttons. Today's column is highlighted.
