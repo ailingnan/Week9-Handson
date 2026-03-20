@@ -40,6 +40,7 @@ We extended the existing pipeline monitoring infrastructure to cover the new Wee
 - `app/weekly_schedule_tab.py` — added `log_schedule_event()` calls at all key actions
 - `artifacts/schedule_logs.csv` — new log file created automatically on first use
 <img width="997" height="545" alt="image" src="https://github.com/user-attachments/assets/b773b821-f87c-4f71-b2a0-8e1a05b2c2b9" />
+
 ---
 
 ## How to Run
