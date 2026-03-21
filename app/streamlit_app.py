@@ -266,10 +266,12 @@ with tabs[0]:
     if final_prompt:
     original_prompt = final_prompt
     final_prompt = translate_to_english(final_prompt)
-        st.session_state.messages.append({"role": "user", "content": final_prompt})
 
-        with st.chat_message("user"):
-            st.markdown(final_prompt)
+    st.session_state.messages.append({"role": "user", "content": final_prompt})
+
+    with st.chat_message("user"):
+        st.markdown(f"**Original:** {original_prompt}")
+        st.markdown(f"**Translated:** {final_prompt}")
 
         with st.chat_message("assistant"):
             with st.spinner("🤖 Agent is thinking..."):
