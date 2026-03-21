@@ -50,6 +50,61 @@ from core.logger import get_logger
 from streamlit_mic_recorder import speech_to_text
 import anthropic
 
+def detect_and_translate(text):
+    try:
+        response = anthropic_client.messages.create(
+            model="claude-3-haiku-20240307",
+            max_tokens=300,
+            messages=[
+                {
+                    "role": "user",
+                    "content": f"""
+Detect the language of this text and translate it to English.
+
+Return EXACTLY:
+Language: <language>
+Translation: <translated text>
+
+Text:
+{text}
+"""
+                }
+            ]
+        )
+
+        result = response.content[0].text.strip()
+
+        lines = result.split("\n")
+        detected_lang = lines[0].replace("Language:", "").strip()
+        translated = lines[1].replace("Translation:", "").strip()
+
+        return detected_lang, translated
+
+    except Exception:
+        return "Unknown", text
+
+
+def translate_back(text, target_language):
+    try:
+        if target_language.lower() == "english":
+            return text
+
+        response = anthropic_client.messages.create(
+            model="claude-3-haiku-20240307",
+            max_tokens=300,
+            messages=[
+                {
+                    "role": "user",
+                    "content": f"Translate this to {target_language}: {text}"
+                }
+            ]
+        )
+
+        return response.content[0].text.strip()
+
+    except Exception:
+        return text
+
 logger = get_logger("app")
 
 def translate_to_english(text):
@@ -171,7 +226,7 @@ tabs = st.tabs([
 # ─────────────────────────────────────────────────────────────
 with tabs[0]:
 
-    st.header("🤖 PolicyPulse Smart Agent")
+       st.header("🤖 PolicyPulse Smart Agent")
     st.markdown("Ask me anything about UMKC policies, what-if scenarios, or pipeline analytics!")
 
     if "messages" not in st.session_state:
@@ -180,7 +235,6 @@ with tabs[0]:
     if "voice_prompt" not in st.session_state:
         st.session_state.voice_prompt = ""
 
-    # ✅ FIXED: inside tab
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
@@ -271,23 +325,42 @@ with tabs[0]:
 
     if final_prompt:
         original_prompt = final_prompt
-        final_prompt = translate_to_english(final_prompt)
+        detected_lang, english_prompt = detect_and_translate(final_prompt)
 
-        st.session_state.messages.append({"role": "user", "content": final_prompt})
+        log_event(
+            run_id=f"lang-{int(time.time())}",
+            stage="language_detection",
+            status="success",
+            rows_out=len(english_prompt),
+            latency_ms=0
+        )
+
+        st.session_state.messages.append({
+            "role": "user",
+            "content": original_prompt
+        })
 
         with st.chat_message("user"):
+            st.markdown(f"**Detected Language:** {detected_lang}")
             st.markdown(f"**Original:** {original_prompt}")
-            st.markdown(f"**Translated:** {final_prompt}")
+            if detected_lang.lower() != "english":
+                st.markdown(f"**Translated to English:** {english_prompt}")
 
         with st.chat_message("assistant"):
             with st.spinner("🤖 Agent is thinking..."):
-                response_data = run_agent(final_prompt)
+                response_data = run_agent(english_prompt)
 
             answer = response_data.get("answer", "No answer generated.")
             trace = response_data.get("trace", [])
             evidence = response_data.get("evidence", [])
 
-            st.markdown(answer)
+            final_answer = translate_back(answer, detected_lang)
+
+            st.markdown(final_answer)
+
+            if detected_lang.lower() != "english":
+                with st.expander("🔍 English Response"):
+                    st.markdown(answer)
 
             if trace:
                 with st.expander("🛠️ Agent Reasoning Trace"):
@@ -304,7 +377,7 @@ with tabs[0]:
 
         st.session_state.messages.append({
             "role": "assistant",
-            "content": answer,
+            "content": final_answer,
             "trace": trace,
             "evidence": evidence
         })
