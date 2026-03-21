@@ -229,6 +229,16 @@ with tabs[0]:
     final_prompt = None
     if prompt:
         final_prompt = prompt
+    elif send_voice and not st.session_state.voice_prompt.strip():
+        log_event(
+            run_id=f"voice-send-{int(time.time())}",
+            stage="voice_message_sent",
+            status="fail",
+            rows_out=0,
+            latency_ms=0,
+            error_message="Send voice message clicked with empty transcription"
+        )
+        st.warning("No transcribed voice message to send.")
     elif send_voice and st.session_state.voice_prompt.strip():
         final_prompt = st.session_state.voice_prompt.strip()
         log_event(
