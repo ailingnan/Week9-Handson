@@ -179,136 +179,138 @@ with tabs[0]:
 
     if "voice_prompt" not in st.session_state:
         st.session_state.voice_prompt = ""
-      
-for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
-        if "trace" in msg and msg["trace"]:
-            with st.expander("🛠️ Agent Reasoning Trace"):
-                for t in msg["trace"]:
-                    st.json(t)
-        if "evidence" in msg and msg["evidence"]:
-            with st.expander("📄 Retrieved Evidence"):
-                for evidence_item in msg["evidence"]:
-                    st.markdown(
-                        f"**{evidence_item['doc']} (Page {evidence_item['page']})** "
-                        f"- Score: {evidence_item['score']}\n\n> {evidence_item['text']}"
-                    )
 
-st.subheader("🎤 Voice Input")
+    # ✅ MOVE THIS INSIDE
+    for msg in st.session_state.messages:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
+            if "trace" in msg and msg["trace"]:
+                with st.expander("🛠️ Agent Reasoning Trace"):
+                    for t in msg["trace"]:
+                        st.json(t)
+            if "evidence" in msg and msg["evidence"]:
+                with st.expander("📄 Retrieved Evidence"):
+                    for evidence_item in msg["evidence"]:
+                        st.markdown(
+                            f"**{evidence_item['doc']} (Page {evidence_item['page']})** "
+                            f"- Score: {evidence_item['score']}\n\n> {evidence_item['text']}"
+                        )
 
-voice_t0 = time.time()
+    # ✅ ALSO THIS
+    st.subheader("🎤 Voice Input")
 
-try:
-    spoken_text = speech_to_text(
-        language="en",
-        start_prompt="Start recording",
-        stop_prompt="Stop recording",
-        just_once=True,
-        use_container_width=True,
-        key="voice_input",
-    )
-    voice_latency_ms = int((time.time() - voice_t0) * 1000)
+    voice_t0 = time.time()
 
-except Exception as e:
-    voice_latency_ms = int((time.time() - voice_t0) * 1000)
-    log_event(
-        run_id=f"voice-{int(time.time())}",
-        stage="speech_to_text",
-        status="fail",
-        latency_ms=voice_latency_ms,
-        error_message=str(e)
-    )
-    st.error(f"Voice input failed: {e}")
-    spoken_text = None
+    try:
+        spoken_text = speech_to_text(
+            language="en",
+            start_prompt="Start recording",
+            stop_prompt="Stop recording",
+            just_once=True,
+            use_container_width=True,
+            key="voice_input",
+        )
+        voice_latency_ms = int((time.time() - voice_t0) * 1000)
 
-if spoken_text:
-    st.session_state.voice_prompt = spoken_text
-    log_event(
-        run_id=f"voice-{int(time.time())}",
-        stage="speech_to_text",
-        status="success",
-        rows_out=len(spoken_text),
-        latency_ms=voice_latency_ms
-    )
-    st.success("Voice captured successfully.")
+    except Exception as e:
+        voice_latency_ms = int((time.time() - voice_t0) * 1000)
+        log_event(
+            run_id=f"voice-{int(time.time())}",
+            stage="speech_to_text",
+            status="fail",
+            latency_ms=voice_latency_ms,
+            error_message=str(e)
+        )
+        st.error(f"Voice input failed: {e}")
+        spoken_text = None
 
-prompt = st.chat_input("Type your question here...")
+    if spoken_text:
+        st.session_state.voice_prompt = spoken_text
+        log_event(
+            run_id=f"voice-{int(time.time())}",
+            stage="speech_to_text",
+            status="success",
+            rows_out=len(spoken_text),
+            latency_ms=voice_latency_ms
+        )
+        st.success("Voice captured successfully.")
 
-if st.session_state.voice_prompt:
-    st.text_area(
-        "Transcribed voice message",
-        value=st.session_state.voice_prompt,
-        height=100,
-        key="voice_preview",
-    )
+    prompt = st.chat_input("Type your question here...")
 
-send_voice = st.button("Send voice message", use_container_width=True)
+    if st.session_state.voice_prompt:
+        st.text_area(
+            "Transcribed voice message",
+            value=st.session_state.voice_prompt,
+            height=100,
+            key="voice_preview",
+        )
 
-final_prompt = None
-if prompt:
-    final_prompt = prompt
-elif send_voice and not st.session_state.voice_prompt.strip():
-    log_event(
-        run_id=f"voice-send-{int(time.time())}",
-        stage="voice_message_sent",
-        status="warning",
-        rows_out=0,
-        latency_ms=0,
-        error_message="Send voice message clicked with empty transcription"
-    )
-    st.warning("No transcribed voice message to send.")
-elif send_voice and st.session_state.voice_prompt.strip():
-    final_prompt = st.session_state.voice_prompt.strip()
-    log_event(
-        run_id=f"voice-send-{int(time.time())}",
-        stage="voice_message_sent",
-        status="success",
-        rows_out=len(final_prompt),
-        latency_ms=0
-    )
+    send_voice = st.button("Send voice message", use_container_width=True)
 
-if final_prompt:
-    original_prompt = final_prompt
-    final_prompt = translate_to_english(final_prompt)
+    final_prompt = None
+    if prompt:
+        final_prompt = prompt
+    elif send_voice and not st.session_state.voice_prompt.strip():
+        log_event(
+            run_id=f"voice-send-{int(time.time())}",
+            stage="voice_message_sent",
+            status="warning",
+            rows_out=0,
+            latency_ms=0,
+            error_message="Send voice message clicked with empty transcription"
+        )
+        st.warning("No transcribed voice message to send.")
+    elif send_voice and st.session_state.voice_prompt.strip():
+        final_prompt = st.session_state.voice_prompt.strip()
+        log_event(
+            run_id=f"voice-send-{int(time.time())}",
+            stage="voice_message_sent",
+            status="success",
+            rows_out=len(final_prompt),
+            latency_ms=0
+        )
 
-    st.session_state.messages.append({"role": "user", "content": final_prompt})
+    if final_prompt:
+        original_prompt = final_prompt
+        final_prompt = translate_to_english(final_prompt)
 
-    with st.chat_message("user"):
-        st.markdown(f"**Original:** {original_prompt}")
-        st.markdown(f"**Translated:** {final_prompt}")
+        st.session_state.messages.append({"role": "user", "content": final_prompt})
 
-    with st.chat_message("assistant"):
-        with st.spinner("🤖 Agent is thinking..."):
-            response_data = run_agent(final_prompt)
+        with st.chat_message("user"):
+            st.markdown(f"**Original:** {original_prompt}")
+            st.markdown(f"**Translated:** {final_prompt}")
 
-        answer = response_data.get("answer", "No answer generated.")
-        trace = response_data.get("trace", [])
-        evidence = response_data.get("evidence", [])
+        with st.chat_message("assistant"):
+            with st.spinner("🤖 Agent is thinking..."):
+                response_data = run_agent(final_prompt)
 
-        st.markdown(answer)
+            answer = response_data.get("answer", "No answer generated.")
+            trace = response_data.get("trace", [])
+            evidence = response_data.get("evidence", [])
 
-        if trace:
-            with st.expander("🛠️ Agent Reasoning Trace"):
-                for t in trace:
-                    st.json(t)
+            st.markdown(answer)
 
-        if evidence:
-            with st.expander("📄 Retrieved Evidence"):
-                for evidence_item in evidence:
-                    st.markdown(
-                        f"**{evidence_item['doc']} (Page {evidence_item['page']})** "
-                        f"- Score: {evidence_item['score']}\n\n> {evidence_item['text']}"
-                    )
+            if trace:
+                with st.expander("🛠️ Agent Reasoning Trace"):
+                    for t in trace:
+                        st.json(t)
 
-    st.session_state.messages.append({
-        "role": "assistant",
-        "content": answer,
-        "trace": trace,
-        "evidence": evidence
-    })
+            if evidence:
+                with st.expander("📄 Retrieved Evidence"):
+                    for evidence_item in evidence:
+                        st.markdown(
+                            f"**{evidence_item['doc']} (Page {evidence_item['page']})** "
+                            f"- Score: {evidence_item['score']}\n\n> {evidence_item['text']}"
+                        )
 
-    st.session_state.voice_prompt = ""
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": answer,
+            "trace": trace,
+            "evidence": evidence
+        })
+
+        st.session_state.voice_prompt = ""
 # ─────────────────────────────────────────────────────────────
 # TAB 1 · Retrieval
 # ─────────────────────────────────────────────────────────────
