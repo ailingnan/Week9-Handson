@@ -273,37 +273,37 @@ with tabs[0]:
         st.markdown(f"**Original:** {original_prompt}")
         st.markdown(f"**Translated:** {final_prompt}")
 
-        with st.chat_message("assistant"):
-            with st.spinner("🤖 Agent is thinking..."):
-                response_data = run_agent(final_prompt)
+    with st.chat_message("assistant"):
+        with st.spinner("🤖 Agent is thinking..."):
+            response_data = run_agent(final_prompt)
 
-            answer = response_data.get("answer", "No answer generated.")
-            trace = response_data.get("trace", [])
-            evidence = response_data.get("evidence", [])
+        answer = response_data.get("answer", "No answer generated.")
+        trace = response_data.get("trace", [])
+        evidence = response_data.get("evidence", [])
 
-            st.markdown(answer)
+        st.markdown(answer)
 
-            if trace:
-                with st.expander("🛠️ Agent Reasoning Trace"):
-                    for t in trace:
-                        st.json(t)
+        if trace:
+            with st.expander("🛠️ Agent Reasoning Trace"):
+                for t in trace:
+                    st.json(t)
 
-            if evidence:
-                with st.expander("📄 Retrieved Evidence"):
-                    for evidence_item in evidence:
-                        st.markdown(
-                            f"**{evidence_item['doc']} (Page {evidence_item['page']})** "
-                            f"- Score: {evidence_item['score']}\n\n> {evidence_item['text']}"
-                        )
+        if evidence:
+            with st.expander("📄 Retrieved Evidence"):
+                for evidence_item in evidence:
+                    st.markdown(
+                        f"**{evidence_item['doc']} (Page {evidence_item['page']})** "
+                        f"- Score: {evidence_item['score']}\n\n> {evidence_item['text']}"
+                    )
 
-        st.session_state.messages.append({
-            "role": "assistant",
-            "content": answer,
-            "trace": trace,
-            "evidence": evidence
-        })
+    st.session_state.messages.append({
+        "role": "assistant",
+        "content": answer,
+        "trace": trace,
+        "evidence": evidence
+    })
 
-        st.session_state.voice_prompt = ""
+    st.session_state.voice_prompt = ""
 # ─────────────────────────────────────────────────────────────
 # TAB 1 · Retrieval
 # ─────────────────────────────────────────────────────────────
