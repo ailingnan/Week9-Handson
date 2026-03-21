@@ -69,12 +69,9 @@ def translate_to_english(text):
 load_dotenv()
 LOG_PATH = os.path.join(PROJECT_ROOT, "artifacts", "pipeline_logs.csv")
 APP_VERSION = st.sidebar.selectbox("Model Version", ["v1", "v2", "v3"], index=0)
-load_dotenv()
-
 anthropic_client = anthropic.Anthropic(
     api_key=os.getenv("ANTHROPIC_API_KEY")
 )
-
 LOG_PATH = os.path.join(PROJECT_ROOT, "artifacts", "pipeline_logs.csv")
 
 @st.cache_resource
