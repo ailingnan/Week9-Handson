@@ -178,17 +178,40 @@ with tabs[0]:
 
     st.subheader("🎤 Voice Input")
 
-    spoken_text = speech_to_text(
-        language="en",
-        start_prompt="Start recording",
-        stop_prompt="Stop recording",
-        just_once=True,
-        use_container_width=True,
-        key="voice_input",
-    )
+    voice_t0 = time.time()
+
+    try:
+        spoken_text = speech_to_text(
+            language="en",
+            start_prompt="Start recording",
+            stop_prompt="Stop recording",
+            just_once=True,
+            use_container_width=True,
+            key="voice_input",
+        )
+        voice_latency_ms = int((time.time() - voice_t0) * 1000)
+
+    except Exception as e:
+        voice_latency_ms = int((time.time() - voice_t0) * 1000)
+        log_event(
+            run_id=f"voice-{int(time.time())}",
+            stage="speech_to_text",
+            status="fail",
+            latency_ms=voice_latency_ms,
+            error_message=str(e)
+        )
+        st.error(f"Voice input failed: {e}")
+        spoken_text = None
 
     if spoken_text:
         st.session_state.voice_prompt = spoken_text
+        log_event(
+            run_id=f"voice-{int(time.time())}",
+            stage="speech_to_text",
+            status="success",
+            rows_out=len(spoken_text),
+            latency_ms=voice_latency_ms
+        )
         st.success("Voice captured successfully.")
 
     prompt = st.chat_input("Type your question here...")
@@ -208,9 +231,17 @@ with tabs[0]:
         final_prompt = prompt
     elif send_voice and st.session_state.voice_prompt.strip():
         final_prompt = st.session_state.voice_prompt.strip()
+        log_event(
+            run_id=f"voice-send-{int(time.time())}",
+            stage="voice_message_sent",
+            status="success",
+            rows_out=len(final_prompt),
+            latency_ms=0
+        )
 
     if final_prompt:
         st.session_state.messages.append({"role": "user", "content": final_prompt})
+
         with st.chat_message("user"):
             st.markdown(final_prompt)
 
