@@ -48,6 +48,7 @@ from agent.agent_runner import run_agent
 from core.config import SETTINGS
 from core.logger import get_logger
 from streamlit_mic_recorder import speech_to_text
+import anthropic
 
 logger = get_logger("app")
 
@@ -68,6 +69,13 @@ def translate_to_english(text):
 load_dotenv()
 LOG_PATH = os.path.join(PROJECT_ROOT, "artifacts", "pipeline_logs.csv")
 APP_VERSION = st.sidebar.selectbox("Model Version", ["v1", "v2", "v3"], index=0)
+load_dotenv()
+
+anthropic_client = anthropic.Anthropic(
+    api_key=os.getenv("ANTHROPIC_API_KEY")
+)
+
+LOG_PATH = os.path.join(PROJECT_ROOT, "artifacts", "pipeline_logs.csv")
 
 @st.cache_resource
 def init_db_tables():
@@ -165,84 +173,84 @@ tabs = st.tabs([
 # TAB 0 · Agent Chat
 # ─────────────────────────────────────────────────────────────
 with tabs[0]:
-    st.header("🤖 PolicyPulse Smart Agent")
-    st.markdown("Ask me anything about UMKC policies, what-if scenarios, or pipeline analytics!")
+st.header("🤖 PolicyPulse Smart Agent")
+st.markdown("Ask me anything about UMKC policies, what-if scenarios, or pipeline analytics!")
 
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-    if "voice_prompt" not in st.session_state:
-        st.session_state.voice_prompt = ""
+if "voice_prompt" not in st.session_state:
+    st.session_state.voice_prompt = ""
 
-    for msg in st.session_state.messages:
-        with st.chat_message(msg["role"]):
-            st.markdown(msg["content"])
-            if "trace" in msg and msg["trace"]:
-                with st.expander("🛠️ Agent Reasoning Trace"):
-                    for t in msg["trace"]:
-                        st.json(t)
-            if "evidence" in msg and msg["evidence"]:
-                with st.expander("📄 Retrieved Evidence"):
-                    for evidence_item in msg["evidence"]:
-                        st.markdown(
-                            f"**{evidence_item['doc']} (Page {evidence_item['page']})** "
-                            f"- Score: {evidence_item['score']}\n\n> {evidence_item['text']}"
-                        )
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
+        if "trace" in msg and msg["trace"]:
+            with st.expander("🛠️ Agent Reasoning Trace"):
+                for t in msg["trace"]:
+                    st.json(t)
+        if "evidence" in msg and msg["evidence"]:
+            with st.expander("📄 Retrieved Evidence"):
+                for evidence_item in msg["evidence"]:
+                    st.markdown(
+                        f"**{evidence_item['doc']} (Page {evidence_item['page']})** "
+                        f"- Score: {evidence_item['score']}\n\n> {evidence_item['text']}"
+                    )
 
-    st.subheader("🎤 Voice Input")
+st.subheader("🎤 Voice Input")
 
-    voice_t0 = time.time()
+voice_t0 = time.time()
 
-    try:
-        spoken_text = speech_to_text(
-            language="en",
-            start_prompt="Start recording",
-            stop_prompt="Stop recording",
-            just_once=True,
-            use_container_width=True,
-            key="voice_input",
-        )
-        voice_latency_ms = int((time.time() - voice_t0) * 1000)
+try:
+    spoken_text = speech_to_text(
+        language="en",
+        start_prompt="Start recording",
+        stop_prompt="Stop recording",
+        just_once=True,
+        use_container_width=True,
+        key="voice_input",
+    )
+    voice_latency_ms = int((time.time() - voice_t0) * 1000)
 
-    except Exception as e:
-        voice_latency_ms = int((time.time() - voice_t0) * 1000)
-        log_event(
-            run_id=f"voice-{int(time.time())}",
-            stage="speech_to_text",
-            status="fail",
-            latency_ms=voice_latency_ms,
-            error_message=str(e)
-        )
-        st.error(f"Voice input failed: {e}")
-        spoken_text = None
+except Exception as e:
+    voice_latency_ms = int((time.time() - voice_t0) * 1000)
+    log_event(
+        run_id=f"voice-{int(time.time())}",
+        stage="speech_to_text",
+        status="fail",
+        latency_ms=voice_latency_ms,
+        error_message=str(e)
+    )
+    st.error(f"Voice input failed: {e}")
+    spoken_text = None
 
-    if spoken_text:
-        st.session_state.voice_prompt = spoken_text
-        log_event(
-            run_id=f"voice-{int(time.time())}",
-            stage="speech_to_text",
-            status="success",
-            rows_out=len(spoken_text),
-            latency_ms=voice_latency_ms
-        )
-        st.success("Voice captured successfully.")
+if spoken_text:
+    st.session_state.voice_prompt = spoken_text
+    log_event(
+        run_id=f"voice-{int(time.time())}",
+        stage="speech_to_text",
+        status="success",
+        rows_out=len(spoken_text),
+        latency_ms=voice_latency_ms
+    )
+    st.success("Voice captured successfully.")
 
-    prompt = st.chat_input("Type your question here...")
+prompt = st.chat_input("Type your question here...")
 
-    if st.session_state.voice_prompt:
-        st.text_area(
-            "Transcribed voice message",
-            value=st.session_state.voice_prompt,
-            height=100,
-            key="voice_preview",
-        )
+if st.session_state.voice_prompt:
+    st.text_area(
+        "Transcribed voice message",
+        value=st.session_state.voice_prompt,
+        height=100,
+        key="voice_preview",
+    )
 
-    send_voice = st.button("Send voice message", use_container_width=True)
+send_voice = st.button("Send voice message", use_container_width=True)
 
-    final_prompt = None
-    if prompt:
-        final_prompt = prompt
-    elif send_voice and not st.session_state.voice_prompt.strip():
+final_prompt = None
+if prompt:
+    final_prompt = prompt
+elif send_voice and not st.session_state.voice_prompt.strip():
     log_event(
         run_id=f"voice-send-{int(time.time())}",
         stage="voice_message_sent",
@@ -252,18 +260,17 @@ with tabs[0]:
         error_message="Send voice message clicked with empty transcription"
     )
     st.warning("No transcribed voice message to send.")
-      
-    elif send_voice and st.session_state.voice_prompt.strip():
-        final_prompt = st.session_state.voice_prompt.strip()
-        log_event(
-            run_id=f"voice-send-{int(time.time())}",
-            stage="voice_message_sent",
-            status="success",
-            rows_out=len(final_prompt),
-            latency_ms=0
-        )
+elif send_voice and st.session_state.voice_prompt.strip():
+    final_prompt = st.session_state.voice_prompt.strip()
+    log_event(
+        run_id=f"voice-send-{int(time.time())}",
+        stage="voice_message_sent",
+        status="success",
+        rows_out=len(final_prompt),
+        latency_ms=0
+    )
 
-    if final_prompt:
+if final_prompt:
     original_prompt = final_prompt
     final_prompt = translate_to_english(final_prompt)
 
