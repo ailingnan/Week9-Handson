@@ -171,12 +171,15 @@ tabs = st.tabs([
 # ─────────────────────────────────────────────────────────────
 with tabs[0]:
 
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+    st.header("🤖 PolicyPulse Smart Agent")
+    st.markdown("Ask me anything about UMKC policies, what-if scenarios, or pipeline analytics!")
 
-if "voice_prompt" not in st.session_state:
-    st.session_state.voice_prompt = ""
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
 
+    if "voice_prompt" not in st.session_state:
+        st.session_state.voice_prompt = ""
+      
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
