@@ -180,7 +180,7 @@ with tabs[0]:
     if "voice_prompt" not in st.session_state:
         st.session_state.voice_prompt = ""
 
-    # ✅ MOVE THIS INSIDE
+    # ✅ FIXED: inside tab
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
@@ -196,7 +196,6 @@ with tabs[0]:
                             f"- Score: {evidence_item['score']}\n\n> {evidence_item['text']}"
                         )
 
-    # ✅ ALSO THIS
     st.subheader("🎤 Voice Input")
 
     voice_t0 = time.time()
