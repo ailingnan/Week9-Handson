@@ -47,6 +47,7 @@ from app.weekly_schedule_tab import render_weekly_schedule_tab
 from agent.agent_runner import run_agent
 from core.config import SETTINGS
 from core.logger import get_logger
+from streamlit_mic_recorder import speech_to_text
 
 logger = get_logger("app")
 
