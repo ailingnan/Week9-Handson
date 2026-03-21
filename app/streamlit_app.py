@@ -51,6 +51,19 @@ from streamlit_mic_recorder import speech_to_text
 
 logger = get_logger("app")
 
+def translate_to_english(text):
+    response = anthropic_client.messages.create(
+        model="claude-3-haiku-20240307",
+        max_tokens=300,
+        messages=[
+            {
+                "role": "user",
+                "content": f"Detect the language and translate to English: {text}"
+            }
+        ]
+    )
+    return response.content[0].text.strip()
+
 # ── Base Configuration ──────────────────────────────────────────
 load_dotenv()
 LOG_PATH = os.path.join(PROJECT_ROOT, "artifacts", "pipeline_logs.csv")
@@ -251,6 +264,8 @@ with tabs[0]:
         )
 
     if final_prompt:
+    original_prompt = final_prompt
+    final_prompt = translate_to_english(final_prompt)
         st.session_state.messages.append({"role": "user", "content": final_prompt})
 
         with st.chat_message("user"):
