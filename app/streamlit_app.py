@@ -155,11 +155,12 @@ with tabs[0]:
     st.header("🤖 PolicyPulse Smart Agent")
     st.markdown("Ask me anything about UMKC policies, what-if scenarios, or pipeline analytics!")
 
-    # Initialize chat history in session state
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
-    # Display chat messages from history
+    if "voice_prompt" not in st.session_state:
+        st.session_state.voice_prompt = ""
+
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
@@ -170,44 +171,80 @@ with tabs[0]:
             if "evidence" in msg and msg["evidence"]:
                 with st.expander("📄 Retrieved Evidence"):
                     for evidence_item in msg["evidence"]:
-                        st.markdown(f"**{evidence_item['doc']} (Page {evidence_item['page']})** - Score: {evidence_item['score']}\n\n> {evidence_item['text']}")
+                        st.markdown(
+                            f"**{evidence_item['doc']} (Page {evidence_item['page']})** "
+                            f"- Score: {evidence_item['score']}\n\n> {evidence_item['text']}"
+                        )
 
-    # Chat Input
-    if prompt := st.chat_input("Ex: 'How much is a student parking permit?' or 'Show me the eval summary'"):
-        # Add user message to state and display
-        st.session_state.messages.append({"role": "user", "content": prompt})
+    st.subheader("🎤 Voice Input")
+
+    spoken_text = speech_to_text(
+        language="en",
+        start_prompt="Start recording",
+        stop_prompt="Stop recording",
+        just_once=True,
+        use_container_width=True,
+        key="voice_input",
+    )
+
+    if spoken_text:
+        st.session_state.voice_prompt = spoken_text
+        st.success("Voice captured successfully.")
+
+    prompt = st.chat_input("Type your question here...")
+
+    if st.session_state.voice_prompt:
+        st.text_area(
+            "Transcribed voice message",
+            value=st.session_state.voice_prompt,
+            height=100,
+            key="voice_preview",
+        )
+
+    send_voice = st.button("Send voice message", use_container_width=True)
+
+    final_prompt = None
+    if prompt:
+        final_prompt = prompt
+    elif send_voice and st.session_state.voice_prompt.strip():
+        final_prompt = st.session_state.voice_prompt.strip()
+
+    if final_prompt:
+        st.session_state.messages.append({"role": "user", "content": final_prompt})
         with st.chat_message("user"):
-            st.markdown(prompt)
+            st.markdown(final_prompt)
 
-        # Agent processing
         with st.chat_message("assistant"):
             with st.spinner("🤖 Agent is thinking..."):
-                response_data = run_agent(prompt)
-                
+                response_data = run_agent(final_prompt)
+
             answer = response_data.get("answer", "No answer generated.")
             trace = response_data.get("trace", [])
             evidence = response_data.get("evidence", [])
 
             st.markdown(answer)
-            
+
             if trace:
                 with st.expander("🛠️ Agent Reasoning Trace"):
                     for t in trace:
                         st.json(t)
-                        
+
             if evidence:
                 with st.expander("📄 Retrieved Evidence"):
                     for evidence_item in evidence:
-                        st.markdown(f"**{evidence_item['doc']} (Page {evidence_item['page']})** - Score: {evidence_item['score']}\n\n> {evidence_item['text']}")
+                        st.markdown(
+                            f"**{evidence_item['doc']} (Page {evidence_item['page']})** "
+                            f"- Score: {evidence_item['score']}\n\n> {evidence_item['text']}"
+                        )
 
-        # Save assistant message to state
         st.session_state.messages.append({
-            "role": "assistant", 
+            "role": "assistant",
             "content": answer,
             "trace": trace,
             "evidence": evidence
         })
 
+        st.session_state.voice_prompt = ""
 # ─────────────────────────────────────────────────────────────
 # TAB 1 · Retrieval
 # ─────────────────────────────────────────────────────────────
