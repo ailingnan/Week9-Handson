@@ -170,8 +170,6 @@ tabs = st.tabs([
 # TAB 0 · Agent Chat
 # ─────────────────────────────────────────────────────────────
 with tabs[0]:
-st.header("🤖 PolicyPulse Smart Agent")
-st.markdown("Ask me anything about UMKC policies, what-if scenarios, or pipeline analytics!")
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
