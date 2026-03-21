@@ -13,12 +13,13 @@ We added a new **📅 Weekly Schedule** tab to the Streamlit application. This f
 - **Google Maps navigation** — each event card with a building name generates a directions link using the student's GPS coordinates as the origin. Clicking opens turn-by-turn navigation in Google Maps at no API cost.
 - **Week navigation** — students can browse forward and backward by week using Prev / Today / Next buttons. Today's column is highlighted.
 
+**Voice interaction support** — users can interact with the AI agent using speech input through a microphone interface. Spoken queries are automatically transcribed into text, previewed, and then processed within the chat workflow, enabling a more natural and accessible user experience.
+
 **Files added:**
 - `app/weekly_schedule_tab.py` — Streamlit UI for the new tab
 - `core/weekly_schedule.py` — schedule engine, Claude API calls, RooGroups scraper, navigation links
 <img width="877" height="538" alt="image" src="https://github.com/user-attachments/assets/b4cd246b-f761-4d11-a8f3-a1f32d4a7535" />
 
----
 
 ### Enhancement 2: Logging and Debugging Support
 
@@ -32,6 +33,8 @@ We extended the existing pipeline monitoring infrastructure to cover the new Wee
   - `personal_event_add` — records the parsed event title, target date, and end-to-end Claude API latency
   - `roogroups_login` — records login outcome and network latency
 - **System log integration** — all schedule events are also written to `logs/system.log` via the shared `get_logger()` utility, giving a consolidated view alongside the existing RAG pipeline and LLM generation logs.
+
+- - **Voice interaction logging** — extended the logging system to capture voice-related events, including speech-to-text success and failure, empty voice submission warnings, voice message send actions, and transcription latency. These logs are integrated into the existing monitoring pipeline to improve observability, debugging, and performance tracking of the voice interaction workflow.
 
 **Files modified:**
 - `app/weekly_schedule_tab.py` — added `log_schedule_event()` calls at all key actions
@@ -56,7 +59,7 @@ Set `ANTHROPIC_API_KEY` in your `.env` file to enable syllabus parsing and perso
 | Member | Contributions |
 |---|---|
 | **Ailing Nan** | Designed and implemented the full Weekly Schedule feature including syllabus PDF parsing via Claude API, RooGroups scraper and mock data, personal event NLP input (Chinese + English), free-gap detection algorithm, Google Maps navigation links, Streamlit UI layout, schedule logging system, and integration into the main app |
-| **Lyza Iamrache** | Assisted with testing the weekly schedule feature, verified demo mode behavior across different syllabus formats, and contributed to the Week 9 group report write-up |
+| **Lyza Iamrache** | Implemented the voice interaction feature in the Agent Chat tab, enabling speech-to-text input and seamless integration into the chat workflow. Added logging for voice capture (success/failure), voice message sending, empty submission handling, and transcription latency tracking. Conducted system-level testing and validation of the Weekly Schedule feature across different syllabus formats and contributed to the Week 9 group report.  |
 | **Gia Huynh** | Assisted with requirements.txt dependency updates, README documentation, and supported integration testing of the new tab with the existing Snowflake pipeline |
 
 ---
